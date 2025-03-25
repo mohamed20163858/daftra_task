@@ -85,10 +85,19 @@ export default function Nav() {
   // Fetch nav items on mount
   useEffect(() => {
     fetch(`${API_URL}/nav`)
-      .then((res) => res.json())
-      .then((data: NavItem[]) => {
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return res.text();
+      })
+      .then((text) => {
+        const data: NavItem[] = text ? JSON.parse(text) : [];
         // Assuming the API returns an unsorted array; sort by order property
         setNavItems(data.sort((a, b) => a.order - b.order));
+      })
+      .catch((error) => {
+        console.error("Error fetching navigation:", error);
       });
   }, [API_URL]);
 
@@ -128,9 +137,20 @@ export default function Nav() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedNav),
     })
-      .then((res) => res.json())
-      .then(() => {
+      .then((res) => res.text())
+      .then((text) => {
+        // Optionally, parse JSON if text exists
+        if (text) {
+          try {
+            JSON.parse(text);
+          } catch {
+            console.error("Response was not valid JSON:", text);
+          }
+        }
         setEditMode(false);
+      })
+      .catch((error) => {
+        console.error("Error saving navigation:", error);
       });
   };
 
