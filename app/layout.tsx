@@ -21,10 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} antialiased`}>
+      <body className={`${dmSans.variable} text-[#404040] antialiased`}>
         <div className="min-h-screen flex">
           {/* Sidebar for desktop */}
-          <aside className="w-[300px] border-r py-4 hidden md:block">
+          <aside className="w-[400px] border-r py-4 hidden md:block">
             <Nav />
           </aside>
           {/* Main content */}

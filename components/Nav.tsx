@@ -6,15 +6,13 @@ import Link from "next/link";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import SettingIcon from "../public/settings.svg";
+import DominoIcon from "../public/domino.svg";
+import EditIcon from "../public/edit.svg";
+import EyeIcon from "../public/eye.svg";
+import EyeOffIcon from "../public/eyeOff.svg";
+import { FaArrowLeft } from "react-icons/fa";
 
-import {
-  FiChevronDown,
-  FiChevronUp,
-  FiEye,
-  FiEyeOff,
-  FiEdit,
-  FiCheck,
-} from "react-icons/fi";
+import { FiChevronDown, FiChevronUp, FiCheck } from "react-icons/fi";
 
 export interface NavItem {
   id: number | string;
@@ -55,11 +53,11 @@ async function fetchWithRetry(
 }
 
 // --- NavItemComponent ---
-// Displays the nav item content and handles drag-and-drop.
-// Dragging is enabled only in edit mode.
+// Added a new "level" prop to determine background.
 interface NavItemComponentProps {
   item: NavItem;
   index: number;
+  level: number;
   moveItem: (fromIndex: number, toIndex: number) => void;
   editMode: boolean;
   updateTitle: (id: number | string, newTitle: string) => void;
@@ -111,12 +109,14 @@ const NavItemComponent = ({
     },
   });
 
-  // Attach drag and drop refs only when in edit mode.
   if (editMode) {
     drag(drop(ref));
   }
 
-  // Determine target route: Dashboard routes to "/" else "/empty"
+  // Set background color based on level:
+  // Top-level (level === 0) gets bg-[#F7F7F7], children get white.
+  //   const bgClass = level === 0 ? "bg-[#F7F7F7]" : "bg-white";
+
   const href = item.title === "Dashboard" ? "/" : "/empty";
 
   const handleSave = () => {
@@ -127,13 +127,16 @@ const NavItemComponent = ({
   return (
     <div
       ref={ref}
-      className={`p-2 border rounded mb-2 bg-white ${
+      className={`p-2 rounded mb-2 w-full ${
         isDragging ? "opacity-50" : "opacity-100"
       }`}
     >
       {editMode ? (
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
+            <div>
+              <DominoIcon className="w-[30px] h-[30px] text-[#404040]" />
+            </div>
             {isEditing ? (
               <input
                 type="text"
@@ -149,21 +152,9 @@ const NavItemComponent = ({
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() =>
-                updateVisibility(item.id, !(item.visible !== false))
-              }
-              aria-label="Toggle Visibility"
-            >
-              {item.visible !== false ? (
-                <FiEye size={20} />
-              ) : (
-                <FiEyeOff size={20} />
-              )}
-            </button>
             {isEditing ? (
               <button onClick={handleSave} aria-label="Save Title">
-                <FiCheck size={20} />
+                <FiCheck size={25} />
               </button>
             ) : (
               <button
@@ -173,9 +164,27 @@ const NavItemComponent = ({
                 }}
                 aria-label="Edit Title"
               >
-                <FiEdit size={20} />
+                <div className="flex items-center justify-center">
+                  <EditIcon className="w-[25px] h-[25px] text-[#848484]" />
+                </div>
               </button>
             )}
+            <button
+              onClick={() =>
+                updateVisibility(item.id, !(item.visible !== false))
+              }
+              aria-label="Toggle Visibility"
+            >
+              {item.visible !== false ? (
+                <div className="flex items-center justify-center mb-[-10px]">
+                  <EyeIcon className="w-[25px] h-[25px] text-[#848484]" />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center">
+                  <EyeOffIcon className="w-[25px] h-[25px] text-[#848484]" />
+                </div>
+              )}
+            </button>
           </div>
         </div>
       ) : item.children && item.children.length > 0 ? (
@@ -193,6 +202,7 @@ const NavItemComponent = ({
 interface NavItemWrapperProps {
   item: NavItem;
   index: number;
+  level: number;
   moveItem: (fromIndex: number, toIndex: number) => void;
   editMode: boolean;
   updateTitle: (id: number | string, newTitle: string) => void;
@@ -204,6 +214,7 @@ interface NavItemWrapperProps {
 const NavItemWrapper = ({
   item,
   index,
+  level,
   moveItem,
   editMode,
   updateTitle,
@@ -215,10 +226,15 @@ const NavItemWrapper = ({
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div
+        className={`flex items-center justify-between px-4 py-2 rounded-[4px] ${
+          level === 0 ? "bg-[#F7F7F7]" : "bg-white"
+        }`}
+      >
         <NavItemComponent
           item={item}
           index={index}
+          level={level}
           moveItem={moveItem}
           editMode={editMode}
           updateTitle={updateTitle}
@@ -230,7 +246,11 @@ const NavItemWrapper = ({
             className="ml-2"
             aria-label={expanded ? "Collapse" : "Expand"}
           >
-            {expanded ? <FiChevronUp /> : <FiChevronDown />}
+            {expanded ? (
+              <FiChevronUp size={25} className="text-[#848484]" />
+            ) : (
+              <FiChevronDown size={25} className="text-[#848484]" />
+            )}
           </button>
         )}
       </div>
@@ -238,7 +258,7 @@ const NavItemWrapper = ({
         <div className="pl-4">
           <NavList
             items={item.children}
-            level={1}
+            level={level + 1}
             onChange={(newChildren) => {
               onChange({ ...item, children: newChildren }, index);
             }}
@@ -260,7 +280,13 @@ interface NavListProps {
   apiUrl: string;
 }
 
-const NavList = ({ items, onChange, editMode, apiUrl }: NavListProps) => {
+const NavList = ({
+  items,
+  level,
+  onChange,
+  editMode,
+  apiUrl,
+}: NavListProps) => {
   const displayedItems = !editMode
     ? items.filter((item) => item.visible !== false)
     : items;
@@ -303,6 +329,7 @@ const NavList = ({ items, onChange, editMode, apiUrl }: NavListProps) => {
           <NavItemWrapper
             item={item}
             index={index}
+            level={level}
             moveItem={moveItem}
             editMode={editMode}
             updateTitle={updateTitleLocal}
@@ -321,7 +348,11 @@ const NavList = ({ items, onChange, editMode, apiUrl }: NavListProps) => {
 };
 
 // --- Main Nav Component ---
-export default function Nav() {
+interface NavProps {
+  setOpen?: (open: boolean) => void;
+}
+
+export default function Nav({ setOpen }: NavProps) {
   const [navItems, setNavItems] = useState<NavItem[]>([]);
   const [editMode, setEditMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
@@ -371,10 +402,20 @@ export default function Nav() {
   }
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className=" text-[#404040]">
+      <div className="text-[#404040] text-[25px] font-medium leading-[26.22px] tracking-[0]">
         <div className="flex justify-between items-center mb-4 border-b border-[#E9E9E9] pb-4">
-          <h2 className="text-[25px] font-medium leading-[26.22px] tracking-[0] ml-4">
-            Menu
+          <h2 className="text-[25px] font-medium leading-[26.22px] tracking-[0] ml-4 flex items-center">
+            <div className="flex justify-end p-2 md:hidden">
+              <button
+                onClick={() => {
+                  if (setOpen) setOpen(false);
+                }}
+                aria-label="Close Menu"
+              >
+                <FaArrowLeft size={24} />
+              </button>
+            </div>
+            <span>Menu</span>
           </h2>
           <button
             onClick={() => setEditMode(!editMode)}
