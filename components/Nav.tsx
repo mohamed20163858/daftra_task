@@ -11,7 +11,7 @@ export interface NavItem {
   id: number | string;
   title: string;
   target?: string;
-  visible?: boolean;
+  visible?: boolean; // if false, the item is hidden in view mode
   order?: number;
   children?: NavItem[];
 }
@@ -46,13 +46,14 @@ async function fetchWithRetry(
 }
 
 // --- NavItemComponent ---
-// This component displays the nav item content (title or input for editing) and handles drag-and-drop.
+// Displays the nav item content and handles drag-and-drop.
 interface NavItemComponentProps {
   item: NavItem;
   index: number;
   moveItem: (fromIndex: number, toIndex: number) => void;
   editMode: boolean;
   updateTitle: (id: number | string, newTitle: string) => void;
+  updateVisibility: (id: number | string, newVisible: boolean) => void;
 }
 
 const NavItemComponent = ({
@@ -61,6 +62,7 @@ const NavItemComponent = ({
   moveItem,
   editMode,
   updateTitle,
+  updateVisibility,
 }: NavItemComponentProps) => {
   const [{ isDragging }, drag] = useDrag({
     type: "NAV_ITEM",
@@ -80,7 +82,7 @@ const NavItemComponent = ({
     },
   });
 
-  // Determine target route: Dashboard routes to "/", everything else to "/empty"
+  // Determine target route: Dashboard routes to "/" else "/empty"
   const href = item.title === "Dashboard" ? "/" : "/empty";
 
   return (
@@ -88,21 +90,33 @@ const NavItemComponent = ({
       ref={(node) => {
         drag(drop(node));
       }}
-      className={`p-2 border rounded mb-2 bg-white flex items-center justify-between ${
+      className={`p-2 border rounded mb-2 bg-white flex flex-col ${
         isDragging ? "opacity-50" : "opacity-100"
       }`}
     >
       {editMode ? (
-        <input
-          type="text"
-          value={item.title}
-          onChange={(e) => updateTitle(item.id, e.target.value)}
-          className="border p-1 w-full"
-        />
+        <>
+          <input
+            type="text"
+            value={item.title}
+            onChange={(e) => updateTitle(item.id, e.target.value)}
+            className="border p-1 w-full mb-1"
+          />
+          <label className="flex items-center text-sm">
+            <input
+              type="checkbox"
+              checked={item.visible !== false} // default to visible if undefined
+              onChange={(e) => updateVisibility(item.id, e.target.checked)}
+              className="mr-1"
+            />
+            Visible
+          </label>
+        </>
       ) : item.children && item.children.length > 0 ? (
+        // In view mode with children, simply show the title (clicking the arrow will expand/collapse)
         <span>{item.title}</span>
       ) : (
-        // Wrap the item title with a Link so that clicking navigates appropriately.
+        // In view mode without children, wrap in a link.
         <Link href={href}>
           <span>{item.title}</span>
         </Link>
@@ -119,6 +133,7 @@ interface NavItemWrapperProps {
   moveItem: (fromIndex: number, toIndex: number) => void;
   editMode: boolean;
   updateTitle: (id: number | string, newTitle: string) => void;
+  updateVisibility: (id: number | string, newVisible: boolean) => void;
   onChange: (newItem: NavItem, index: number) => void;
   apiUrl: string;
 }
@@ -129,6 +144,7 @@ const NavItemWrapper = ({
   moveItem,
   editMode,
   updateTitle,
+  updateVisibility,
   onChange,
   apiUrl,
 }: NavItemWrapperProps) => {
@@ -143,6 +159,7 @@ const NavItemWrapper = ({
           moveItem={moveItem}
           editMode={editMode}
           updateTitle={updateTitle}
+          updateVisibility={updateVisibility}
         />
         {item.children && item.children.length > 0 && (
           <button
@@ -181,6 +198,11 @@ interface NavListProps {
 }
 
 const NavList = ({ items, onChange, editMode, apiUrl }: NavListProps) => {
+  // In view mode, filter out items that are not visible.
+  const displayedItems = !editMode
+    ? items.filter((item) => item.visible !== false)
+    : items;
+
   const moveItem = (fromIndex: number, toIndex: number) => {
     const newItems = [...items];
     const [movedItem] = newItems.splice(fromIndex, 1);
@@ -205,9 +227,16 @@ const NavList = ({ items, onChange, editMode, apiUrl }: NavListProps) => {
     onChange(newItems);
   };
 
+  const updateVisibilityLocal = (id: number | string, newVisible: boolean) => {
+    const newItems = items.map((item) =>
+      item.id === id ? { ...item, visible: newVisible } : item
+    );
+    onChange(newItems);
+  };
+
   return (
     <div>
-      {items.map((item, index) => (
+      {displayedItems.map((item, index) => (
         <div key={item.id} className="mb-2">
           <NavItemWrapper
             item={item}
@@ -215,6 +244,7 @@ const NavList = ({ items, onChange, editMode, apiUrl }: NavListProps) => {
             moveItem={moveItem}
             editMode={editMode}
             updateTitle={updateTitleLocal}
+            updateVisibility={updateVisibilityLocal}
             onChange={(newItem, idx) => {
               const newItems = [...items];
               newItems[idx] = newItem;
