@@ -5,13 +5,21 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { FiSettings, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import {
+  FiSettings,
+  FiChevronDown,
+  FiChevronUp,
+  FiEye,
+  FiEyeOff,
+  FiEdit,
+  FiCheck,
+} from "react-icons/fi";
 
 export interface NavItem {
   id: number | string;
   title: string;
   target?: string;
-  visible?: boolean; // if false, the item is hidden in view mode
+  visible?: boolean;
   order?: number;
   children?: NavItem[];
 }
@@ -47,6 +55,7 @@ async function fetchWithRetry(
 
 // --- NavItemComponent ---
 // Displays the nav item content and handles drag-and-drop.
+// In global edit mode, it shows an eye icon for visibility toggle and a pen icon for inline editing.
 interface NavItemComponentProps {
   item: NavItem;
   index: number;
@@ -64,6 +73,10 @@ const NavItemComponent = ({
   updateTitle,
   updateVisibility,
 }: NavItemComponentProps) => {
+  // Local state for inline editing and draft title
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(item.title);
+
   const [{ isDragging }, drag] = useDrag({
     type: "NAV_ITEM",
     item: { id: item.id, index },
@@ -85,38 +98,71 @@ const NavItemComponent = ({
   // Determine target route: Dashboard routes to "/" else "/empty"
   const href = item.title === "Dashboard" ? "/" : "/empty";
 
+  // Handle saving the edited title
+  const handleSave = () => {
+    updateTitle(item.id, draftTitle);
+    setIsEditing(false);
+  };
+
   return (
     <div
       ref={(node) => {
         drag(drop(node));
       }}
-      className={`p-2 border rounded mb-2 bg-white flex flex-col ${
+      className={`p-2 border rounded mb-2 bg-white ${
         isDragging ? "opacity-50" : "opacity-100"
       }`}
     >
       {editMode ? (
-        <>
-          <input
-            type="text"
-            value={item.title}
-            onChange={(e) => updateTitle(item.id, e.target.value)}
-            className="border p-1 w-full mb-1"
-          />
-          <label className="flex items-center text-sm">
-            <input
-              type="checkbox"
-              checked={item.visible !== false} // default to visible if undefined
-              onChange={(e) => updateVisibility(item.id, e.target.checked)}
-              className="mr-1"
-            />
-            Visible
-          </label>
-        </>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {isEditing ? (
+              <input
+                type="text"
+                value={draftTitle}
+                onChange={(e) => setDraftTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSave();
+                }}
+                className="border p-1 w-[90%]"
+              />
+            ) : (
+              <span>{item.title}</span>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() =>
+                updateVisibility(item.id, !(item.visible !== false))
+              }
+              aria-label="Toggle Visibility"
+            >
+              {item.visible !== false ? (
+                <FiEye size={20} />
+              ) : (
+                <FiEyeOff size={20} />
+              )}
+            </button>
+            {isEditing ? (
+              <button onClick={handleSave} aria-label="Save Title">
+                <FiCheck size={20} />
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsEditing(true);
+                  setDraftTitle(item.title);
+                }}
+                aria-label="Edit Title"
+              >
+                <FiEdit size={20} />
+              </button>
+            )}
+          </div>
+        </div>
       ) : item.children && item.children.length > 0 ? (
-        // In view mode with children, simply show the title (clicking the arrow will expand/collapse)
         <span>{item.title}</span>
       ) : (
-        // In view mode without children, wrap in a link.
         <Link href={href}>
           <span>{item.title}</span>
         </Link>
@@ -152,7 +198,7 @@ const NavItemWrapper = ({
 
   return (
     <div>
-      <div className="flex items-center">
+      <div className="flex items-center justify-between">
         <NavItemComponent
           item={item}
           index={index}
