@@ -10,6 +10,8 @@ import DominoIcon from "../public/domino.svg";
 import EditIcon from "../public/edit.svg";
 import EyeIcon from "../public/eye.svg";
 import EyeOffIcon from "../public/eyeOff.svg";
+import SaveIcon from "../public/save.svg";
+import DiscardIcon from "../public/discard.svg";
 import { FaArrowLeft } from "react-icons/fa";
 
 import { FiChevronDown, FiChevronUp, FiCheck } from "react-icons/fi";
@@ -429,14 +431,29 @@ export default function Nav({ setOpen }: NavProps) {
             </div>
             <span>Menu</span>
           </h2>
-          <button
-            onClick={() => setEditMode(!editMode)}
-            className="cursor-pointer mr-4"
-          >
-            <div>
-              <SettingIcon className="w-[30px] h-[30px] " />
+          {editMode ? (
+            <div className=" mr-4 flex space-x-2">
+              <button onClick={discardChanges}>
+                <div>
+                  <DiscardIcon className="w-[45px] h-[45px] " />
+                </div>
+              </button>
+              <button onClick={saveNav}>
+                <div>
+                  <SaveIcon className="w-[45px] h-[45px] " />
+                </div>
+              </button>
             </div>
-          </button>
+          ) : (
+            <button
+              onClick={() => setEditMode(!editMode)}
+              className="cursor-pointer mr-4"
+            >
+              <div>
+                <SettingIcon className="w-[30px] h-[30px] " />
+              </div>
+            </button>
+          )}
         </div>
         <NavList
           items={navItems}
@@ -445,22 +462,6 @@ export default function Nav({ setOpen }: NavProps) {
           editMode={editMode}
           apiUrl={API_URL}
         />
-        {editMode && (
-          <div className="mt-4 flex space-x-2">
-            <button
-              onClick={saveNav}
-              className="bg-blue-500 text-white p-2 rounded"
-            >
-              Save
-            </button>
-            <button
-              onClick={discardChanges}
-              className="bg-gray-300 text-black p-2 rounded"
-            >
-              Discard
-            </button>
-          </div>
-        )}
       </div>
     </DndProvider>
   );
