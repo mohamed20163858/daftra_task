@@ -135,7 +135,11 @@ const NavItemComponent = ({
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
             <div>
-              <DominoIcon className="w-[30px] h-[30px] text-[#404040]" />
+              <DominoIcon
+                className={`w-[30px] h-[30px] ${
+                  item.visible === false ? "text-[#CDCDCD]" : "text-[#404040]"
+                }`}
+              />
             </div>
             {isEditing ? (
               <input
@@ -148,7 +152,13 @@ const NavItemComponent = ({
                 className="border p-1 w-[90%]"
               />
             ) : (
-              <span>{item.title}</span>
+              <span
+                className={
+                  item.visible === false ? "text-[#CDCDCD]" : "text-[#404040]"
+                }
+              >
+                {item.title}
+              </span>
             )}
           </div>
           <div className="flex items-center space-x-2">
@@ -228,7 +238,7 @@ const NavItemWrapper = ({
     <div>
       <div
         className={`flex items-center justify-between px-4 py-2 rounded-[4px] ${
-          level === 0 ? "bg-[#F7F7F7]" : "bg-white"
+          level === 0 ? "bg-[#F7F7F7]" : "bg-white text-[16px] font-normal"
         }`}
       >
         <NavItemComponent
@@ -402,9 +412,11 @@ export default function Nav({ setOpen }: NavProps) {
   }
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="text-[#404040] text-[25px] font-medium leading-[26.22px] tracking-[0]">
+      <div
+        className={`text-[#404040] text-[20px] font-medium leading-[26.22px] tracking-[0]`}
+      >
         <div className="flex justify-between items-center mb-4 border-b border-[#E9E9E9] pb-4">
-          <h2 className="text-[25px] font-medium leading-[26.22px] tracking-[0] ml-4 flex items-center">
+          <h2 className="text-[20px] font-medium leading-[26.22px] tracking-[0] ml-4 flex items-center">
             <div className="flex justify-end p-2 md:hidden">
               <button
                 onClick={() => {
