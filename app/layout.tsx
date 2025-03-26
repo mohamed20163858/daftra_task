@@ -3,6 +3,7 @@ import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import Nav from "../components/Nav";
 import MobileNav from "../components/MobileNav";
+import DesktopNavbar from "@/components/DesktopNavbar";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -21,8 +22,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} text-[#404040] antialiased`}>
-        <div className="min-h-screen flex">
+      <body
+        className={`${dmSans.variable} text-[#404040] antialiased min-h-screen`}
+      >
+        <DesktopNavbar />
+        <div className=" flex">
           {/* Sidebar for desktop */}
           <aside className="w-[400px] border-r border-[#E9E9E9] py-4 hidden md:block">
             <Nav />
