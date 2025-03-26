@@ -30,7 +30,7 @@ export default function RootLayout({
       >
         <div className="min-h-screen flex">
           {/* Sidebar for desktop*/}
-          <aside className="w-64 border-r p-4 hidden md:block">
+          <aside className="w-[300px] border-r p-4 hidden md:block">
             <Nav />
           </aside>
           {/* Main content */}

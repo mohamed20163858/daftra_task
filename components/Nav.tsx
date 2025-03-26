@@ -1,7 +1,7 @@
 // components/Nav.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -55,7 +55,7 @@ async function fetchWithRetry(
 
 // --- NavItemComponent ---
 // Displays the nav item content and handles drag-and-drop.
-// In global edit mode, it shows an eye icon for visibility toggle and a pen icon for inline editing.
+// Dragging is enabled only in edit mode.
 interface NavItemComponentProps {
   item: NavItem;
   index: number;
@@ -73,13 +73,14 @@ const NavItemComponent = ({
   updateTitle,
   updateVisibility,
 }: NavItemComponentProps) => {
-  // Local state for inline editing and draft title
   const [isEditing, setIsEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState(item.title);
+  const ref = useRef<HTMLDivElement>(null);
 
   const [{ isDragging }, drag] = useDrag({
     type: "NAV_ITEM",
     item: { id: item.id, index },
+    canDrag: () => editMode, // enable dragging only in edit mode
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -87,18 +88,36 @@ const NavItemComponent = ({
 
   const [, drop] = useDrop({
     accept: "NAV_ITEM",
-    hover(dragged: DragItem) {
-      if (dragged.index !== index) {
-        moveItem(dragged.index, index);
-        dragged.index = index;
-      }
+    hover(dragged: DragItem, monitor) {
+      if (!editMode) return; // only allow hover actions in edit mode
+      if (!ref.current) return;
+      const dragIndex = dragged.index;
+      const hoverIndex = index;
+      if (dragIndex === hoverIndex) return;
+
+      const hoverBoundingRect = ref.current.getBoundingClientRect();
+      const hoverMiddleY =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      const clientOffset = monitor.getClientOffset();
+      if (!clientOffset) return;
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
+
+      moveItem(dragIndex, hoverIndex);
+      dragged.index = hoverIndex;
     },
   });
+
+  // Attach drag and drop refs only when in edit mode.
+  if (editMode) {
+    drag(drop(ref));
+  }
 
   // Determine target route: Dashboard routes to "/" else "/empty"
   const href = item.title === "Dashboard" ? "/" : "/empty";
 
-  // Handle saving the edited title
   const handleSave = () => {
     updateTitle(item.id, draftTitle);
     setIsEditing(false);
@@ -106,15 +125,13 @@ const NavItemComponent = ({
 
   return (
     <div
-      ref={(node) => {
-        drag(drop(node));
-      }}
+      ref={ref}
       className={`p-2 border rounded mb-2 bg-white ${
         isDragging ? "opacity-50" : "opacity-100"
       }`}
     >
       {editMode ? (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
             {isEditing ? (
               <input
@@ -172,7 +189,6 @@ const NavItemComponent = ({
 };
 
 // --- NavItemWrapper ---
-// Wraps each nav item and manages expand/collapse if children exist.
 interface NavItemWrapperProps {
   item: NavItem;
   index: number;
@@ -244,7 +260,6 @@ interface NavListProps {
 }
 
 const NavList = ({ items, onChange, editMode, apiUrl }: NavListProps) => {
-  // In view mode, filter out items that are not visible.
   const displayedItems = !editMode
     ? items.filter((item) => item.visible !== false)
     : items;
