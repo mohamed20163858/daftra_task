@@ -2,29 +2,57 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { FiSettings } from "react-icons/fi";
+import { FiSettings, FiChevronDown, FiChevronUp } from "react-icons/fi";
 
-interface NavItem {
-  id: string;
+export interface NavItem {
+  id: number | string;
   title: string;
-  url: string;
-  visible: boolean;
-  order: number;
+  target?: string;
+  visible?: boolean;
+  order?: number;
+  children?: NavItem[];
 }
 
 interface DragItem {
-  id: string;
+  id: number | string;
   index: number;
 }
 
-interface NavItemProps {
+// --- Helper: Fetch with Retry ---
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries: number = 3,
+  delay: number = 500
+): Promise<Response> {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      throw new Error(`Server responded with status ${res.status}`);
+    }
+    return res;
+  } catch (err) {
+    if (retries > 0) {
+      console.warn(`Retrying request. Retries left: ${retries}`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return fetchWithRetry(url, options, retries - 1, delay);
+    } else {
+      throw err;
+    }
+  }
+}
+
+// --- NavItemComponent ---
+// This component displays the nav item content (title or input for editing) and handles drag-and-drop.
+interface NavItemComponentProps {
   item: NavItem;
   index: number;
-  moveItem: (dragIndex: number, hoverIndex: number) => void;
+  moveItem: (fromIndex: number, toIndex: number) => void;
   editMode: boolean;
-  updateTitle: (id: string, newTitle: string) => void;
+  updateTitle: (id: number | string, newTitle: string) => void;
 }
 
 const NavItemComponent = ({
@@ -33,7 +61,7 @@ const NavItemComponent = ({
   moveItem,
   editMode,
   updateTitle,
-}: NavItemProps) => {
+}: NavItemComponentProps) => {
   const [{ isDragging }, drag] = useDrag({
     type: "NAV_ITEM",
     item: { id: item.id, index },
@@ -52,12 +80,15 @@ const NavItemComponent = ({
     },
   });
 
+  // Determine target route: Dashboard routes to "/", everything else to "/empty"
+  const href = item.title === "Dashboard" ? "/" : "/empty";
+
   return (
     <div
       ref={(node) => {
         drag(drop(node));
       }}
-      className={`p-2 border rounded mb-2 bg-white ${
+      className={`p-2 border rounded mb-2 bg-white flex items-center justify-between ${
         isDragging ? "opacity-50" : "opacity-100"
       }`}
     >
@@ -68,66 +99,154 @@ const NavItemComponent = ({
           onChange={(e) => updateTitle(item.id, e.target.value)}
           className="border p-1 w-full"
         />
-      ) : (
+      ) : item.children && item.children.length > 0 ? (
         <span>{item.title}</span>
+      ) : (
+        // Wrap the item title with a Link so that clicking navigates appropriately.
+        <Link href={href}>
+          <span>{item.title}</span>
+        </Link>
       )}
     </div>
   );
 };
 
-export default function Nav() {
-  const [navItems, setNavItems] = useState<NavItem[]>([]);
-  const [editMode, setEditMode] = useState<boolean>(false);
+// --- NavItemWrapper ---
+// Wraps each nav item and manages expand/collapse if children exist.
+interface NavItemWrapperProps {
+  item: NavItem;
+  index: number;
+  moveItem: (fromIndex: number, toIndex: number) => void;
+  editMode: boolean;
+  updateTitle: (id: number | string, newTitle: string) => void;
+  onChange: (newItem: NavItem, index: number) => void;
+  apiUrl: string;
+}
 
-  // Use environment variable for API URL
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+const NavItemWrapper = ({
+  item,
+  index,
+  moveItem,
+  editMode,
+  updateTitle,
+  onChange,
+  apiUrl,
+}: NavItemWrapperProps) => {
+  const [expanded, setExpanded] = useState<boolean>(false);
 
-  // Fetch nav items on mount
-  useEffect(() => {
-    fetch(`${API_URL}/nav`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return res.text();
-      })
-      .then((text) => {
-        const data: NavItem[] = text ? JSON.parse(text) : [];
-        // Assuming the API returns an unsorted array; sort by order property
-        setNavItems(data.sort((a, b) => a.order - b.order));
-      })
-      .catch((error) => {
-        console.error("Error fetching navigation:", error);
-      });
-  }, [API_URL]);
+  return (
+    <div>
+      <div className="flex items-center">
+        <NavItemComponent
+          item={item}
+          index={index}
+          moveItem={moveItem}
+          editMode={editMode}
+          updateTitle={updateTitle}
+        />
+        {item.children && item.children.length > 0 && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="ml-2"
+            aria-label={expanded ? "Collapse" : "Expand"}
+          >
+            {expanded ? <FiChevronUp /> : <FiChevronDown />}
+          </button>
+        )}
+      </div>
+      {expanded && item.children && item.children.length > 0 && (
+        <div className="pl-4">
+          <NavList
+            items={item.children}
+            level={1}
+            onChange={(newChildren) => {
+              onChange({ ...item, children: newChildren }, index);
+            }}
+            editMode={editMode}
+            apiUrl={apiUrl}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
-  // Function to reorder items and track changes
+// --- NavList: Recursive Component for Nested Items ---
+interface NavListProps {
+  items: NavItem[];
+  level: number;
+  onChange: (newItems: NavItem[]) => void;
+  editMode: boolean;
+  apiUrl: string;
+}
+
+const NavList = ({ items, onChange, editMode, apiUrl }: NavListProps) => {
   const moveItem = (fromIndex: number, toIndex: number) => {
-    const updatedItems = [...navItems];
-    const [movedItem] = updatedItems.splice(fromIndex, 1);
-    updatedItems.splice(toIndex, 0, movedItem);
-    setNavItems(updatedItems);
+    const newItems = [...items];
+    const [movedItem] = newItems.splice(fromIndex, 1);
+    newItems.splice(toIndex, 0, movedItem);
+    onChange(newItems);
 
-    // Immediately track drag-and-drop event
-    fetch(`${API_URL}/track`, {
+    fetchWithRetry(`${apiUrl}/track`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: movedItem.id, from: fromIndex, to: toIndex }),
-    });
+    })
+      .then(() => {
+        // Successfully tracked
+      })
+      .catch((err) => console.error("Tracking error after retries:", err));
   };
 
-  // Update the title of a nav item
-  const updateTitle = (id: string, newTitle: string) => {
-    setNavItems(
-      navItems.map((item) =>
-        item.id === id ? { ...item, title: newTitle } : item
-      )
+  const updateTitleLocal = (id: number | string, newTitle: string) => {
+    const newItems = items.map((item) =>
+      item.id === id ? { ...item, title: newTitle } : item
     );
+    onChange(newItems);
   };
 
-  // Save the navigation changes
+  return (
+    <div>
+      {items.map((item, index) => (
+        <div key={item.id} className="mb-2">
+          <NavItemWrapper
+            item={item}
+            index={index}
+            moveItem={moveItem}
+            editMode={editMode}
+            updateTitle={updateTitleLocal}
+            onChange={(newItem, idx) => {
+              const newItems = [...items];
+              newItems[idx] = newItem;
+              onChange(newItems);
+            }}
+            apiUrl={apiUrl}
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// --- Main Nav Component ---
+export default function Nav() {
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+
+  useEffect(() => {
+    setMounted(true);
+    fetch(`${API_URL}/nav`)
+      .then((res) => res.text())
+      .then((text) => {
+        const data: NavItem[] = text ? JSON.parse(text) : [];
+        setNavItems(data.sort((a, b) => (a.order || 0) - (b.order || 0)));
+      })
+      .catch((err) => console.error("Error fetching nav:", err));
+  }, [API_URL]);
+
   const saveNav = () => {
-    // Update order properties based on current array order
     const updatedNav = navItems.map((item, index) => ({
       ...item,
       order: index,
@@ -138,32 +257,26 @@ export default function Nav() {
       body: JSON.stringify(updatedNav),
     })
       .then((res) => res.text())
-      .then((text) => {
-        // Optionally, parse JSON if text exists
-        if (text) {
-          try {
-            JSON.parse(text);
-          } catch {
-            console.error("Response was not valid JSON:", text);
-          }
-        }
+      .then(() => {
         setEditMode(false);
       })
-      .catch((error) => {
-        console.error("Error saving navigation:", error);
-      });
+      .catch((err) => console.error("Error saving nav:", err));
   };
 
-  // Discard changes by reloading nav from API
   const discardChanges = () => {
     fetch(`${API_URL}/nav`)
-      .then((res) => res.json())
-      .then((data: NavItem[]) => {
-        setNavItems(data.sort((a, b) => a.order - b.order));
+      .then((res) => res.text())
+      .then((text) => {
+        const data: NavItem[] = text ? JSON.parse(text) : [];
+        setNavItems(data.sort((a, b) => (a.order || 0) - (b.order || 0)));
         setEditMode(false);
-      });
+      })
+      .catch((err) => console.error("Error discarding changes:", err));
   };
 
+  if (!mounted) {
+    return <div>Loading...</div>;
+  }
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="p-4">
@@ -176,18 +289,13 @@ export default function Nav() {
             <FiSettings size={20} />
           </button>
         </div>
-        <div>
-          {navItems.map((item, index) => (
-            <NavItemComponent
-              key={item.id}
-              item={item}
-              index={index}
-              moveItem={moveItem}
-              editMode={editMode}
-              updateTitle={updateTitle}
-            />
-          ))}
-        </div>
+        <NavList
+          items={navItems}
+          level={0}
+          onChange={setNavItems}
+          editMode={editMode}
+          apiUrl={API_URL}
+        />
         {editMode && (
           <div className="mt-4 flex space-x-2">
             <button
