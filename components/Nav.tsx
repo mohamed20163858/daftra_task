@@ -5,8 +5,9 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import SettingIcon from "../public/settings.svg";
+
 import {
-  FiSettings,
   FiChevronDown,
   FiChevronUp,
   FiEye,
@@ -296,7 +297,7 @@ const NavList = ({ items, onChange, editMode, apiUrl }: NavListProps) => {
   };
 
   return (
-    <div>
+    <div className="px-4">
       {displayedItems.map((item, index) => (
         <div key={item.id} className="mb-2">
           <NavItemWrapper
@@ -370,14 +371,18 @@ export default function Nav() {
   }
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Navigation</h2>
+      <div className=" text-[#404040]">
+        <div className="flex justify-between items-center mb-4 border-b border-[#E9E9E9] pb-4">
+          <h2 className="text-[25px] font-medium leading-[26.22px] tracking-[0] ml-4">
+            Menu
+          </h2>
           <button
             onClick={() => setEditMode(!editMode)}
-            className="p-2 border rounded"
+            className="cursor-pointer mr-4"
           >
-            <FiSettings size={20} />
+            <div>
+              <SettingIcon className="w-[30px] h-[30px] " />
+            </div>
           </button>
         </div>
         <NavList

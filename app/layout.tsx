@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import Nav from "../components/Nav";
 import MobileNav from "../components/MobileNav";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
@@ -25,16 +21,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${dmSans.variable} antialiased`}>
         <div className="min-h-screen flex">
-          {/* Sidebar for desktop*/}
-          <aside className="w-[300px] border-r p-4 hidden md:block">
+          {/* Sidebar for desktop */}
+          <aside className="w-[300px] border-r py-4 hidden md:block">
             <Nav />
           </aside>
           {/* Main content */}
-          <main className="flex-1 p-4">{children}</main>{" "}
+          <main className="flex-1 p-4">{children}</main>
           {/* Mobile navigation icon */}
           <div className="md:hidden p-4">
             <MobileNav />
