@@ -4,6 +4,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import ProfileDropdown from "./ProfileDropdown";
 
 interface NavItemProps {
   icon: string;
@@ -66,7 +67,7 @@ export default function DesktopNavbar() {
         <div className="h-8 border-l border-[#E6E6E6]" />
         <NavItem icon="/notifications.svg" label="Notifications" />
         <NavItem icon="/messaging.svg" label="Messaging" />
-        <NavItem icon="/profile.svg" label="Profile" />
+        <ProfileDropdown />
       </div>
     </nav>
   );
