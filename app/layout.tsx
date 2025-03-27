@@ -34,7 +34,7 @@ export default function RootLayout({
           {/* Main content */}
           <main className="flex-1 p-4 bg-[#f7f7f7] min-h-screen">
             {/* Mobile navigation icon */}
-            <div className="md:hidden p-4 ">
+            <div className="md:hidden  ">
               <MobileNav />
             </div>
             <div>{children}</div>

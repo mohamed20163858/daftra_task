@@ -20,7 +20,7 @@ const CustomSwitch = () => {
 export default function AlertCard() {
   return (
     <div className="bg-[#3D8E41] text-white p-4 rounded-md">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between gap-3 items-center">
         {/* Left Section */}
         <div>
           <div className="text-lg font-bold leading-[26px]">

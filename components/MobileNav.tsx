@@ -4,6 +4,7 @@
 import { useState } from "react";
 import Nav from "./Nav";
 import { FiMenu } from "react-icons/fi";
+import AlertCard from "./AlertCard";
 // import { Fix } from "react-icons/fi";
 
 export default function MobileNav() {
@@ -12,7 +13,8 @@ export default function MobileNav() {
   return (
     <>
       {/* Hamburger menu icon aligned to the right */}
-      <div className="flex justify-end md:hidden p-4 ">
+      <div className="flex justify-between md:hidden w-full ">
+        <AlertCard />
         <button
           onClick={() => setOpen(true)}
           className="p-2 border border-[#F0F0F0]"

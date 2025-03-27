@@ -8,7 +8,9 @@ export default function HomePage() {
       <div className="flex justify-end mb-4">
         <SortByDropdown />
       </div>
-      <AlertCard />
+      <div className="hidden md:block">
+        <AlertCard />
+      </div>
     </div>
   );
 }
