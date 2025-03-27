@@ -23,18 +23,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${dmSans.variable} text-[#404040] antialiased min-h-screen`}
-      >
+      <body className={`${dmSans.variable} text-[#404040] antialiased `}>
         <DesktopNavbar />
         <MobileNavbar />
         <div className=" flex">
           {/* Sidebar for desktop */}
-          <aside className="w-[400px] border-r border-[#E9E9E9] py-4 hidden md:block">
+          <aside className="w-[400px]  py-4 hidden md:block">
             <Nav />
           </aside>
           {/* Main content */}
-          <main className="flex-1 p-4">{children}</main>
+          <main className="flex-1 p-4 bg-[#f7f7f7] min-h-screen">
+            {children}
+          </main>
           {/* Mobile navigation icon */}
           <div className="md:hidden p-4">
             <MobileNav />

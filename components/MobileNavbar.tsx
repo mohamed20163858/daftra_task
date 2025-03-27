@@ -34,7 +34,7 @@ export default function MobileNavbar() {
   }, [menuOpen]);
 
   return (
-    <div className="relative bg-[#161616] p-4 md:hidden">
+    <div className="relative bg-[#161616] p-4 min-[820px]:hidden">
       {/* Navbar container */}
       <div className="flex justify-between items-center">
         {/* Profile and hamburger container */}

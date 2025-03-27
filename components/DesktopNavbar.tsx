@@ -33,7 +33,7 @@ const NavItem = ({ icon, label }: NavItemProps) => {
 export default function DesktopNavbar() {
   return (
     <nav
-      className="hidden md:flex items-center justify-between px-[50px] py-3"
+      className="hidden min-[820px]:flex items-center justify-between px-[50px] py-3"
       style={{ backgroundColor: "#161616" }}
     >
       {/* Left side: Logo and Search Bar */}
