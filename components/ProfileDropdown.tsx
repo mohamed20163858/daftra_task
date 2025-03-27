@@ -36,7 +36,7 @@ export default function ProfileDropdown() {
 
       {/* Dropdown menu */}
       {open && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded shadow-lg">
+        <div className="absolute right-0 mt-2 w-64 bg-white rounded shadow-lg z-10">
           {/* First Section */}
           <div className="p-4">
             <a href="#" className="flex items-center">

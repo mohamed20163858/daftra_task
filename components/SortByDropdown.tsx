@@ -51,7 +51,7 @@ export default function SortByDropdown() {
         <FiChevronDown className="ml-2" />
       </button>
       {open && (
-        <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+        <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-9">
           <div className="py-1">
             {["Top match", "Newest", "Latest"].map((option) => (
               <div

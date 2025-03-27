@@ -3,6 +3,7 @@
 import SortByDropdown from "@/components/SortByDropdown";
 import AlertCard from "@/components/AlertCard";
 import JobCard, { Job } from "../components/JobCard";
+import Pagination from "../components/Pagination";
 
 export default function HomePage() {
   const jobs: Job[] = [
@@ -81,6 +82,11 @@ export default function HomePage() {
         {jobs.map((job, idx) => (
           <JobCard key={idx} job={job} isFirst={idx === 0} />
         ))}
+      </div>
+
+      {/* Place the Pagination component at the end */}
+      <div className="mt-8 flex justify-center">
+        <Pagination />
       </div>
     </div>
   );
