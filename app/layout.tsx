@@ -4,6 +4,7 @@ import "./globals.css";
 import Nav from "../components/Nav";
 import MobileNav from "../components/MobileNav";
 import DesktopNavbar from "@/components/DesktopNavbar";
+import MobileNavbar from "@/components/MobileNavbar";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -26,6 +27,7 @@ export default function RootLayout({
         className={`${dmSans.variable} text-[#404040] antialiased min-h-screen`}
       >
         <DesktopNavbar />
+        <MobileNavbar />
         <div className=" flex">
           {/* Sidebar for desktop */}
           <aside className="w-[400px] border-r border-[#E9E9E9] py-4 hidden md:block">
