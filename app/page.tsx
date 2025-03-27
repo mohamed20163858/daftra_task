@@ -1,12 +1,14 @@
 // app/page.tsx
 "use client";
-
+import SortByDropdown from "@/components/SortByDropdown";
+import AlertCard from "@/components/AlertCard";
 export default function HomePage() {
   return (
-    <>
-      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-      {/* Main content goes here */}
-      <p>Welcome to the Dashboard!</p>
-    </>
+    <div className="flex flex-col">
+      <div className="flex justify-end mb-4">
+        <SortByDropdown />
+      </div>
+      <AlertCard />
+    </div>
   );
 }

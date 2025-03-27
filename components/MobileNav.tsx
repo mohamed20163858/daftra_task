@@ -12,10 +12,10 @@ export default function MobileNav() {
   return (
     <>
       {/* Hamburger menu icon aligned to the right */}
-      <div className="flex justify-end md:hidden p-4">
+      <div className="flex justify-end md:hidden p-4 ">
         <button
           onClick={() => setOpen(true)}
-          className="p-2"
+          className="p-2 border border-[#F0F0F0]"
           aria-label="Open Menu"
         >
           <FiMenu size={24} />
