@@ -4,6 +4,7 @@
 import React from "react";
 import Image from "next/image";
 import { FiMapPin, FiCalendar } from "react-icons/fi";
+import { FaHeart } from "react-icons/fa";
 
 export interface Job {
   title: string;
@@ -21,7 +22,7 @@ interface JobCardProps {
 }
 
 export default function JobCard({ job, isFirst = false }: JobCardProps) {
-  // For the first card use a background of #48A74C; others white.
+  // For the first card use a background of #48A74C (semi-transparent) ; others white.
   const bgColor = isFirst ? "rgba(72, 167, 76, 0.2)" : "white";
 
   return (
@@ -40,12 +41,16 @@ export default function JobCard({ job, isFirst = false }: JobCardProps) {
           />
         </div>
         <div>
-          <div className="font-bold text-lg black">{job.title}</div>
+          <div className="font-bold text-lg">{job.title}</div>
           <div className="text-sm text-[#14A077]">{job.company}</div>
         </div>
+        {/* New Heart Button */}
+        <button className="ml-auto rounded-full bg-white border border-[#C4C3C3] p-2">
+          <FaHeart size={16} color="#C4C3C3" />
+        </button>
       </div>
       {/* Section 2: Details */}
-      <div className="mb-4 ">
+      <div className="mb-4">
         {/* First sub-div: location and date */}
         <div className="mb-2 flex gap-3 text-[#707070] font-normal">
           <div className="flex items-center space-x-2">
